@@ -19,3 +19,6 @@ __REST__ is a set of rules and limitations so that the API that isn't too comple
 - install: ```python3 -m pip install flask```
 - run: ```python3 -m flask```
 
+#### OpenAPI
+
+- install: ```python3 -m pip install flask-pydantic-spec```
