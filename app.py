@@ -1,17 +1,19 @@
+from itertools import count
 from typing import Optional, List
 from flask import Flask, request, jsonify
 from flask_pydantic_spec import FlaskPydanticSpec, Response, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from tinydb import TinyDB, Query
 
 server = Flask(__name__)
 spec = FlaskPydanticSpec('flask', title='Any API')
 spec.register(server)
 database = TinyDB('database.json')
+c = count()
 
 
 class Person(BaseModel):
-    id: Optional[int]
+    id: Optional[int] = Field(default_factory = lambda: next(c))
     name: str
     age :int
 
@@ -47,8 +49,21 @@ def getPeople():
                     )
 
 
+@server.get('/person/<int:id>')
+@spec.validate(resp = Response(HTTP_200=Person))
+def getPerson(id: int):
+    """Get a person on the database
+
+    Return a JSON
+    """
+
+    return   jsonify(
+                        database.search(Query().id == id)[0]
+                    )
+
+
 @server.post('/person')
-@spec.validate(body = Request(Person), resp = Response(HTTP_200 = Person))
+@spec.validate(body = Request(Person), resp = Response(HTTP_201 = Person))
 def insertPerson():
     """Insert a person on the database
 
@@ -61,7 +76,7 @@ def insertPerson():
 
 
 @server.put('/person/<int:id>')
-@spec.validate(body = Request(Person), resp = Response(HTTP_200 = Person))
+@spec.validate(body = Request(Person), resp = Response(HTTP_201 = Person))
 def updatePerson(id: int):
     """Update a person on the database
 
@@ -74,7 +89,7 @@ def updatePerson(id: int):
 
 
 @server.delete('/person/<int:id>')
-@spec.validate(resp = Response(HTTP_200 = Person))
+@spec.validate(resp = Response('HTTP_204'))
 def deletePerson(id: int):
     """Delete a person on the database
 
