@@ -4,11 +4,12 @@ from flask import Flask, request, jsonify
 from flask_pydantic_spec import FlaskPydanticSpec, Response, Request
 from pydantic import BaseModel, Field
 from tinydb import TinyDB, Query
+from tinydb.storages import MemoryStorage
 
 server = Flask(__name__)
 spec = FlaskPydanticSpec('flask', title='Any API')
 spec.register(server)
-database = TinyDB('database.json')
+database = TinyDB(storage = MemoryStorage)
 c = count()
 
 
@@ -57,9 +58,10 @@ def getPerson(id: int):
     Return a JSON
     """
 
-    return   jsonify(
-                        database.search(Query().id == id)[0]
-                    )
+    try:
+        return jsonify(database.search(Query().id == id)[0])
+    except IndexError:
+        return {"message": "Person not found"}, 404
 
 
 @server.post('/person')
